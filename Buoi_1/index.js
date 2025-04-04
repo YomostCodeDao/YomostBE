@@ -1,10 +1,11 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import fs from 'fs';
+import { checkIDMiddlewares } from './middlewares/checkIDMiddlewares';
 const app = express()
 const port = 2004
 app.use(bodyParser.json())
-import { checkIDMiddlewares } from './middlewares/checkIDMiddlewares';
+
 
 app.get('/', (req, res) => {
     res.send('Hello World!')
@@ -28,6 +29,7 @@ app.get('/users', (req, res) => {
         res.status(500).send('No data')
     } else {
         res.status(200).send(users);
+
     }
 });
 
@@ -60,21 +62,26 @@ app.get('/users/sort', (req, res) => {
 
 
 //API sửa thông tin người dùng
-app.put('/users/:id', checkIdmiddleware, (req, res) => {
+app.put('/users/:id', checkIDMiddlewares, (req, res) => {
     const id = parseInt(req.params.id)
+    const { name, age } = req.body;
     const users = readData();
-    const index = users.findIndex(user => user.id == id);
-    const user = users[index];
-    const newUser = req.body;
-    users[index] = { ...user, ...newUser };
+    const userIndex = users.findIndex(user => user.id === id);
+    if (userIndex === -1) {
+        return res.status(404).send('ID not found');
+    }
+    if (name) {
+        users[userIndex].name = name;
+    }
+    if (age) {
+        users[userIndex].age = age;
+    }
     writeData(users);
-    res.status(200).send(users);
-
-
+    return res.status(200).send(users[userIndex]);
 });
 
 //API xóa người dùng
-app.delete('/users/:id', checkIdmiddleware, (req, res) => {
+app.delete('/users/:id', checkIDMiddlewares, (req, res) => {
     const id = parseInt(req.params.id);
     const users = readData();
     const newUsers = users.filter(user => user.id !== id);
