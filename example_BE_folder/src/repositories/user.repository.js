@@ -58,4 +58,23 @@ export class UserRepository {
     async getByEmail(email) {
         return await UserModel.findOne({ email });
     }
+
+    async updateAvatarUrl(id, avatarUrl) {
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            id,
+            { avatarUrl },
+            { new: true } // trả về bản ghi đã cập nhật
+        );
+
+        if (!updatedUser) {
+            throw new Error('User not found to update avatar');
+        }
+
+        return {
+            id: String(updatedUser._id),
+            name: updatedUser.name,
+            email: updatedUser.email,
+            avatarUrl: updatedUser.avatarUrl
+        };
+    }
 }

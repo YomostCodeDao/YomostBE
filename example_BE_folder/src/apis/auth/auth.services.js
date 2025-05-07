@@ -26,6 +26,10 @@ class AuthService {
 
         return { token, user };
     }
+
+    async updateAvatar(userId, avatarUrl) {
+        return await userRepo.updateAvatarUrl(userId, avatarUrl);
+    }
 }
 
 export default new AuthService();

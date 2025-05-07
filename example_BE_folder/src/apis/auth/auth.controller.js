@@ -2,6 +2,7 @@ import AuthService from './auth.services.js';
 import UserModel from '../../models/user.model.js';
 import { generateResetToken, verifyResetToken } from '../../utils/token.utils.js';  // Hàm tạo token
 import { sendResetPasswordEmail } from '../../services/mail.service.js';  // Dịch vụ gửi email
+import bcrypt from 'bcrypt';
 class AuthController {
     async register(req, res) {
         try {
@@ -66,16 +67,40 @@ class AuthController {
             }
 
             // Cập nhật mật khẩu mới
-            user.password = newPassword;
+            user.password = await bcrypt.hash(newPassword, 10)
             user.resetToken = undefined;  // Xóa token sau khi đã thay đổi mật khẩu
             user.resetTokenExpiration = undefined;
             await user.save();
 
-            return res.status(200).json({ message: 'Password has been reset successfully' });
+            return res.status(200).json({ message: 'Mật khẩu đã được thay đổi thành công' });
 
         } catch (err) {
             console.error(err);
             return res.status(500).json({ message: 'Server error' });
+        }
+    }
+
+    async uploadAvatar(req, res) {
+        try {
+            const file = req.file;
+            const userId = req.params.id;
+
+            if (!file) {
+                return res.status(400).json({ message: 'Không có ảnh nào được tải lên' });
+            }
+
+            const imageUrl = file.path; // URL do Cloudinary trả về thông qua multer-storage-cloudinary
+            const updatedUser = await AuthService.updateAvatar(userId, imageUrl);
+
+            res.status(200).json({
+                message: 'Tải ảnh đại diện thành công',
+                avatarUrl: updatedUser.avatarUrl,
+                user: updatedUser
+            });
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Upload thất bại', error: err.message });
         }
     }
 }
